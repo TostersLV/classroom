@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Posts extends Model
+{
+    protected $fillable = [
+        'title',
+        'author',
+        'subject',
+        'cover_image',
+        'user_id',
+    ];
+}
