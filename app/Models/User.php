@@ -7,6 +7,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Comment;
 
 class User extends Authenticatable
 {
@@ -25,6 +26,11 @@ class User extends Authenticatable
         'password',
         'profile_picture',
     ];
+
+    public function comments()
+{
+    return $this->hasMany(Comment::class);
+}
 
     /**
      * The attributes that should be hidden for serialization.

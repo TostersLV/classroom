@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Posts;
+use App\Models\Comment;
+use App\Models\Task;
 
 class PostsController extends Controller
 {
@@ -17,9 +19,11 @@ class PostsController extends Controller
         return view('posts.index', compact('posts'));
     }
 
-    public function show(Posts $post)
+    public function show(Posts $post, Comment $comment, Task $task)
     {
-        return view('posts.show', compact('post'));
+        $comment  = Comment::all();
+        $tasks = Task::all();
+        return view('posts.show', compact('post', 'comment'));
     }
 
 
