@@ -14,9 +14,9 @@ class PostsController extends Controller
      */
     public function index()
     {
-        $posts = Posts::latest()->get();
+        $classrooms = Posts::latest()->get();
 
-        return view('posts.index', compact('posts'));
+        return view('dashboard', compact('classrooms'));
     }
 
     public function show(Posts $post, Comment $comment, Task $task)

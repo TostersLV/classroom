@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::create('comments', function (Blueprint $table) {
+        Schema::create('classroom_tasks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('post_id')->constrained('posts')->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('author_name');
-            $table->text('content');
+            $table->foreignId('classroom_id')->constrained('classrooms')->onDelete('cascade');
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->dateTime('due_date')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('comments');
+        Schema::dropIfExists('classroom_tasks');
     }
 };

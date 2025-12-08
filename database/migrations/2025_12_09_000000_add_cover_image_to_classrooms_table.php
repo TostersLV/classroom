@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('submit_tasks', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->timestamps();
+        Schema::table('classrooms', function (Blueprint $table) {
+            $table->string('cover_image')->nullable()->after('description');
         });
     }
 
@@ -23,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('submit_tasks');
+        Schema::table('classrooms', function (Blueprint $table) {
+            $table->dropColumn('cover_image');
+        });
     }
 };

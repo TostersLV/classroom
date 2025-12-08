@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::create('comments', function (Blueprint $table) {
+        Schema::create('classroom_student', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('post_id')->constrained('posts')->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('author_name');
-            $table->text('content');
+            $table->foreignId('classroom_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
+
+            // Ensure a user can only be enrolled once per classroom
+            $table->unique(['classroom_id', 'user_id']);
         });
     }
 
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('comments');
+        Schema::dropIfExists('classroom_student');
     }
 };

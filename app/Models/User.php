@@ -28,9 +28,17 @@ class User extends Authenticatable
     ];
 
     public function comments()
-{
-    return $this->hasMany(Comment::class);
-}
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * Get classrooms where user is enrolled as a student
+     */
+    public function enrolledClassrooms()
+    {
+        return $this->belongsToMany(Classroom::class, 'classroom_student', 'user_id', 'classroom_id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

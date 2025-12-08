@@ -14,12 +14,6 @@
                             {{ __('Users') }}
                         </x-nav-link>
                     @endrole
-
-                    @role('teacher')
-                        <x-nav-link :href="route('posts.create')" :active="request()->routeIs('posts.create')">
-                            {{ __('New Classroom') }}
-                        </x-nav-link>
-                    @endrole
                 </div>
             </div>
 
