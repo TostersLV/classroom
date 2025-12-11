@@ -52,22 +52,24 @@
                     </main>
 
                     <!-- Right action box -->
-                    <aside class="w-full lg:w-56">
-                        <div class="p-4 bg-gray-50 border rounded-md sticky top-6">
-                            <h4 class="text-sm font-semibold text-gray-800 mb-3">Actions</h4>
+                    @role('teacher')
+                     <aside class="w-full lg:w-56">
+                         <div class="p-4 bg-gray-50 border rounded-md sticky top-6">
+                             <h4 class="text-sm font-semibold text-gray-800 mb-3">Actions</h4>
 
-                            
-                            <a href="/posts/{{ $post->id }}/tasks/create" 
-                               class="block w-full text-center px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
-                                New Task
-                            </a>
+                             
+                             <a href="/posts/{{ $post->id }}/tasks/create" 
+                                class="block w-full text-center px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
+                                 New Task
+                             </a>
 
-                            <!-- Optional: quick helper -->
-                            <p class="mt-3 text-xs text-gray-500">
-                                Add tasks for teachers and students. Link the button to your task creation route or open a modal.
-                            </p>
-                        </div>
-                    </aside>
+                             <!-- Optional: quick helper -->
+                             <p class="mt-3 text-xs text-gray-500">
+                                 Add tasks for teachers and students. Link the button to your task creation route or open a modal.
+                             </p>
+                         </div>
+                     </aside>
+                    @endrole
                 </div>
                 
 

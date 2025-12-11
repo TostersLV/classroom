@@ -3,7 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ $task->title }}</h2>
     </x-slot>
 
-    <div class="py-6">
+    <div class="py-6">  
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow sm:rounded-lg p-6">
 
@@ -65,44 +65,148 @@
                                 </form>
                             @endcan
                         </div>
+
+                        <!-- Teacher-only: View submissions / grade button -->
+                        @php
+                            $user = auth()->user();
+                            $isTeacher = $user ? (method_exists($user,'hasRole') ? $user->hasRole('teacher') : (($user->role ?? null) === 'teacher')) : false;
+                        @endphp
+
+                        @if($isTeacher)
+                            <div class="mt-6">
+                                <a href="{{ route('posts.tasks.submissions.index', [$post, $task]) }}" class="inline-flex items-center px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                                    View Submissions & Grade
+                                </a>
+                            </div>
+                        @endif
+
+                        <!-- comments: form + list -->
+                        <section class="mt-8">
+                            <h3 class="text-lg font-semibold mb-3">Comments</h3>
+
+                            @auth
+                                <form action="{{ route('posts.tasks.comments.store', [$post, $task]) }}" method="POST" class="mb-4">
+                                    @csrf
+                                    <textarea name="body" rows="3" class="comment-textarea w-full p-3 rounded-md border bg-white dark:bg-slate-800 dark:text-slate-100" placeholder="Write your comment..." required>{{ old('body') }}</textarea>
+                                    @error('body') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                                    <div class="mt-2">
+                                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md">Post Comment</button>
+                                    </div>
+                                </form>
+                            @else
+                                <p class="text-sm text-gray-500">Please <a href="{{ route('login') }}" class="text-indigo-600 underline">log in</a> to comment.</p>
+                            @endauth
+
+                            <div class="space-y-4">
+                                @foreach($task->comments as $comment)
+                                    @php
+                                        $author = $comment->user;
+                                        $avatar = $author?->profile_picture_url ?? asset('images/default-avatar.png');
+                                    @endphp
+
+                                    <article class="comment-card p-4 rounded-md border flex items-start gap-4">
+                                        <img src="{{ $avatar }}" alt="{{ $author?->first_name ?? 'User' }}" class="w-12 h-12 rounded-full object-cover avatar" />
+
+                                        <div class="flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <div class="font-medium author-name text-gray-900 dark:text-slate-100">
+                                                    {{ $author?->first_name ?? $author?->name ?? 'Unknown' }}
+                                                </div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ $comment->created_at?->format('M j, Y \a\t g:i A') }}
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-2 comment-body">
+                                                {{ $comment->body }}
+                                            </div>
+                                        </div>
+                                    </article>
+                                @endforeach
+                            </div>
+                        </section>
+
                         <!-- end main content -->
                     </main>
 
                     <!-- Right: submission box -->
+                    @php
+                        $submission = auth()->check()
+                            ? \App\Models\SubmitTask::where('task_id', $task->id)
+                                ->where('user_id', auth()->id())
+                                ->with('grade') // eager-load grade
+                                ->first()
+                            : null;
+                    @endphp
+
                     <aside class="w-full lg:w-80">
                         <div class="p-4 bg-gray-50 border rounded-md sticky top-6">
                             <h4 class="text-sm font-semibold text-gray-800 mb-3">Submit your work</h4>
 
                             @auth
-                                <form action="{{ route('posts.tasks.submissions.store', [$post, $task]) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
-                                    @csrf
+                                @if(!$submission)
+                                    <form action="{{ route('posts.tasks.submissions.store', [$post, $task]) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                                        @csrf
+                                        <input type="file" name="submission_file" required class="block w-full" />
+                                        <textarea name="message" rows="3" class="w-full" placeholder="Optional comment"></textarea>
+                                        <button type="submit" class="w-full px-3 py-2 bg-indigo-600 text-white rounded">Submit Work</button>
+                                    </form>
+                                @else
+                                    <div class="p-3 bg-white rounded border">
+                                        @php
+                                            // safe helpers
+                                            $fileUrl = $submission->file_path ? Storage::disk('public')->url($submission->file_path) : null;
+                                            $fileName = $submission->file_name ?? ($submission->file_path ? basename($submission->file_path) : 'Uploaded file');
+                                            $submittedAtRaw = $submission->created_at ?? null;
+                                            $submittedAt = $submittedAtRaw ? \Illuminate\Support\Carbon::parse($submittedAtRaw) : null;
+                                        @endphp
 
-                                    <div>
-                                        <label for="submission_file" class="block text-sm font-medium text-gray-700">File</label>
-                                        <input id="submission_file" name="submission_file" type="file" required
-                                               accept=".pdf,.doc,.docx,.zip,.txt"
-                                               class="mt-1 block w-full text-sm text-gray-700" />
-                                        <p class="mt-1 text-xs text-gray-500">Allowed: pdf, doc, docx, txt, zip. Max ~10MB.</p>
-                                        @error('submission_file') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                    </div>
+                                        @if($fileUrl)
+                                            <a href="{{ $fileUrl }}" target="_blank" class="text-indigo-600 underline">
+                                                {{ $fileName }}
+                                            </a>
+                                        @else
+                                            <div class="text-indigo-600 font-medium">{{ $fileName }}</div>
+                                        @endif
 
-                                    <div>
-                                        <label for="message" class="block text-sm font-medium text-gray-700">Comment (optional)</label>
-                                        <textarea id="message" name="message" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">{{ old('message') }}</textarea>
-                                        @error('message') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-                                    </div>
+                                        <div class="text-xs text-gray-500 mt-2">
+                                            Submitted: {{ $submittedAt ? $submittedAt->format('M j, Y \a\t g:i A') : '—' }}
+                                        </div>
 
-                                    <div class="flex items-center gap-3">
-                                        <button type="submit" class="w-full text-center px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                                            Submit Work
-                                        </button>
+                                        @if($submission->grade)
+                                            <div class="mt-3 p-2 bg-blue-50 border rounded text-sm">
+                                                <div><strong>Grade:</strong> {{ $submission->grade->grade ?? '—' }} @if($submission->grade->grade !== null) /100 @endif</div>
+
+                                                @if(!empty($submission->grade->feedback))
+                                                    <div class="text-sm text-gray-700 mt-1"><strong>Feedback:</strong> {{ $submission->grade->feedback }}</div>
+                                                @endif
+
+                                                @php
+                                                    $gradedRaw = $submission->grade->graded_at ?? $submission->grade->created_at ?? null;
+                                                    $gradedAt = $gradedRaw ? \Illuminate\Support\Carbon::parse($gradedRaw) : null;
+                                                @endphp
+
+                                                <div class="text-xs text-gray-500 mt-2">
+                                                    Graded: {{ $gradedAt ? $gradedAt->format('M j, Y \a\t g:i A') : '—' }}
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="mt-3">
+                                                <form action="{{ route('posts.tasks.submissions.unsubmit', [$post, $task]) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="w-full px-3 py-2 bg-gray-600 text-white rounded">Unsubmit</button>
+                                                </form>
+                                            </div>
+                                        @endif
                                     </div>
-                                </form>
-                            @else
-                                <p class="text-sm text-gray-500">Please <a href="{{ route('login') }}" class="text-indigo-600 underline">log in</a> to submit your work.</p>
+                                @endif
                             @endauth
 
-                            <p class="mt-3 text-xs text-gray-500">Submissions are visible to the teacher. Contact them if you have issues.</p>
+                            @guest
+                                <p class="text-sm text-gray-500">Please <a href="{{ route('login') }}">log in</a> to submit work.</p>
+                            @endguest
+
+                            <p class="mt-3 text-xs text-gray-500">Submissions are visible to the teacher.</p>
                         </div>
                     </aside>
                 </div>

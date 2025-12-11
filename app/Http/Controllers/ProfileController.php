@@ -5,10 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
@@ -25,37 +24,50 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(Request $request): RedirectResponse
+    public function update(\App\Http\Requests\ProfileUpdateRequest $request): \Illuminate\Http\RedirectResponse
     {
-        $user = Auth::user();
+        $user = $request->user();
 
-        // Validate input
-        $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
-        ]);
+        // dump request for debugging (logged)
+        \Log::debug('PROFILE DEBUG - request all', ['all' => $request->all(), 'hasFile' => $request->hasFile('profile_picture')]);
 
-        // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
-            // Delete old file if exists
-            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-                Storage::disk('public')->delete($user->profile_picture);
-            }
+            $file = $request->file('profile_picture');
+            \Log::debug('PROFILE DEBUG - uploaded file', [
+                'isValid' => $file->isValid(),
+                'error' => $file->getError(),
+                'origName' => $file->getClientOriginalName(),
+                'mime' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+            ]);
 
-            // Store new file
-            $path = $request->file('profile_picture')->store('profile-pictures', 'public');
-            $user->profile_picture = $path;
+            if ($file->isValid()) {
+                $path = $file->store('profile_pictures', 'public');
+                \Log::debug('PROFILE DEBUG - stored path', ['path' => $path]);
+
+                // delete old
+                if (! empty($user->profile_picture)) {
+                    \Storage::disk('public')->delete($user->profile_picture);
+                }
+
+                $user->profile_picture = $path;
+            }
         }
 
-        // Update user fields
-        $user->first_name = $validated['first_name'];
-        $user->last_name = $validated['last_name'];
-        $user->email = $validated['email'];
-        $user->save();
+        $data = $request->validated();
+        if (isset($data['first_name'])) $user->first_name = $data['first_name'];
+        if (isset($data['last_name']))  $user->last_name  = $data['last_name'];
+        if (isset($data['email']))      $user->email      = $data['email'];
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        $saved = $user->save();
+        \Log::debug('PROFILE DEBUG - save result', [
+            'saved' => $saved,
+            'user_id' => $user->id,
+            'db_profile_picture' => \DB::table('users')->where('id', $user->id)->value('profile_picture'),
+            'attributes' => $user->getAttributes(),
+        ]);
+
+        return back()->with('status', 'profile-updated');
     }
 
     /**

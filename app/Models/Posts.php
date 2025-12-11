@@ -13,6 +13,7 @@ class Posts extends Model
         'subject',
         'cover_image',
         'user_id',
+        'code',
     ];
 public function comments()
 {
@@ -22,4 +23,10 @@ public function tasks()
 {
     return $this->hasMany(Task::class, 'post_id', 'id');
 }
+// classroom -> users who joined
+    public function joinedUsers()
+    {
+        return $this->belongsToMany(User::class, 'post_user', 'post_id', 'user_id')
+                    ->withTimestamps();
+    }
 }

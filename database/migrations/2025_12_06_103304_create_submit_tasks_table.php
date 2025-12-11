@@ -14,6 +14,12 @@ return new class extends Migration
         Schema::create('submit_tasks', function (Blueprint $table) {
             $table->id();
             $table->fogeignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('task_id')->constrained('tasks')->cascadeOnDelete();
+            $table->string('file_name')->nullable();   // original filename
+            $table->string('file_path')->nullable();   // storage path (e.g. task-files/xxx.pdf)
+            $table->string('file_mime')->nullable();
+            $table->unsignedInteger('file_size')->nullable(); // bytes
+            // vel vajag izdarit php artisan migrate (neizdariju)
             $table->timestamps();
         });
     }

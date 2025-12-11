@@ -24,7 +24,7 @@
                 <!-- create form: posts.tasks.store expects a Posts $post via route-model binding -->
                 <form action="/tasks" method="POST" enctype="multipart/form-data" class="space-y-4">
                     @csrf
-                    <input value=" {{ $post->id }}" name="post_id"     />
+                    <input type="hidden" value=" {{ $post->id }}" name="post_id"     />
                     <div>
                         <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
                         <input id="title" name="title" value="{{ old('title') }}" required

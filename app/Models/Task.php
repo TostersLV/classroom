@@ -22,4 +22,8 @@ class Task extends Model
     {
         return $this->belongsTo(Posts::class);
     }
+    public function comments()
+    {
+        return $this->hasMany(TaskComment::class)->latest();
+    }
 }

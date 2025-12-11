@@ -6,15 +6,25 @@ use Illuminate\Http\Request;
 use App\Models\Posts;
 use App\Models\Comment;
 use App\Models\Task;
+use Illuminate\Support\Str;
+
 
 class PostsController extends Controller
 {
     /**
      * Show the form for creating a new classroom/post.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $posts = Posts::latest()->get();
+        $user = $request->user();
+
+        $isTeacher = $user && (method_exists($user, 'hasRole') ? $user->hasRole('teacher') : (($user->role ?? null) === 'teacher'));
+
+        if ($isTeacher) {
+            $posts = Posts::latest()->get();
+        } else {
+            $posts = $user ? $user->joinedPosts()->latest('posts.created_at')->get() : collect();
+        }
 
         return view('posts.index', compact('posts'));
     }
@@ -58,5 +68,19 @@ class PostsController extends Controller
         ]);
 
         return redirect("/dashboard");
+    }
+    public function generateCode(Request $request, Posts $post)
+    {
+        // only generate if missing (safe-guard)
+        if (empty($post->code)) {
+            do {
+                $code = strtoupper(Str::random(6));
+            } while (Posts::where('code', $code)->exists());
+
+            $post->code = $code;
+            $post->save();
+        }
+
+        return redirect()->back()->with('success', 'Classroom code generated.');
     }
 }
